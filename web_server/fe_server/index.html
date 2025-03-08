@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chat Interface</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="container">
+        <h2>Product Description Generator</h2>
+        <textarea id="userInput" placeholder="Enter your requirements..." maxlength="256"
+            oninput="updateCharCount()"></textarea>
+        <div class="char-count"><span id="charCount">0</span>/256</div>
+        <button onclick="sendMessage()">Submit</button>
+        <div id="resultBox">AI is listening...</div>
+    </div>
+
+    <script>
+        function updateCharCount() {
+            const input = document.getElementById("userInput");
+            document.getElementById("charCount").innerText = input.value.length;
+        }
+
+        async function sendMessage() {
+            const inputBox = document.getElementById("userInput");
+            const resultBox = document.getElementById("resultBox");
+            const requirement = inputBox.value.trim();
+
+            if (!requirement) {
+                resultBox.innerHTML = "Please enter a requirement!";
+                return;
+            }
+
+            resultBox.innerHTML = ""; // Clear previous result
+
+            try {
+                const response = await fetch("http://localhost:8000/answer", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ requirement })
+                });
+
+                if (!response.ok || !response.body) {
+                    throw new Error("No stream received.");
+                }
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let receivedText = "";
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    const chunk = decoder.decode(value, { stream: true });
+                    receivedText += chunk;
+                    resultBox.innerHTML += chunk; // Hiển thị từng phần nội dung
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                resultBox.innerHTML = "Failed to get AI response.";
+            }
+        }
+    </script>
+</body>
+
+</html>
