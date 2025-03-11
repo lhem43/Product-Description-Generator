@@ -43,10 +43,46 @@ def clean_output(text):
     return text.strip()
 
 def extract_key_features(description: str, max_features: int = 10) -> List[str]:
-    """Trích xuất từ khóa quan trọng bằng SpaCy."""
+    """
+    Args:
+        description (str): Main text description.
+        max_features (int): Số lượng đặc điểm tối đa (mặc định là 10).
+
+    Returns:
+        list: Danh sách các đặc điểm quan trọng.
+    """
     doc = nlp(description)
-    features = list(set([chunk.text.strip() for chunk in doc.noun_chunks if len(chunk.text.split()) < 5]))[:max_features]
-    return features
+    features = []
+
+    for ent in doc.ents:
+        if ent.label_ in {"PRODUCT", "ORG"}:
+            features.append((ent.text, len(ent.text.split()), ent.start))
+
+    for chunk in doc.noun_chunks:
+        chunk_text = chunk.text.strip()
+        unwanted = {"which", "your", "and"}
+
+        if not any(word in chunk_text.lower() for word in unwanted):
+            if any(token.pos_ in ["NOUN", "PROPN"] for token in chunk):
+                features.append((chunk_text, len(chunk_text.split()), chunk.start))
+
+    for token in doc:
+        if token.dep_ == "amod" and token.head.pos_ == "NOUN":
+            feature_phrase = f"{token.text} {token.head.text}"
+            features.append((feature_phrase, len(feature_phrase.split()), token.i))
+
+    features = sorted(features, key=lambda x: (-x[1], x[2]))
+
+    feature_list = []
+    seen = set()
+    for feature, _, _ in features:
+        if feature.lower() not in seen:
+            feature_list.append(feature)
+            seen.add(feature.lower())
+        if len(feature_list) >= max_features:
+            break
+
+    return feature_list
 
 def find_best_main_category(title):
     """Xác định danh mục chính bằng BERT."""
@@ -75,6 +111,8 @@ def generate_response(user_input, main_category, sub_category, keywords):
     - **Main Category**: {main_category}
     - **Sub Category**: {sub_category}
     - **Keywords**: {keywords}
+
+    **Important**: The product description **must** include all the following keywords at least once: {keywords}.
 
     **Product Description**:
     """.strip()
@@ -121,5 +159,5 @@ async def answer(request: Request):
     main_category = find_best_main_category(user_input)
     sub_category = find_best_subcategory(user_input, main_category)
     keywords = ", ".join(extract_key_features(user_input))
-
+    print(keywords)
     return StreamingResponse(generate_response(user_input, main_category, sub_category, keywords), media_type="text/plain")

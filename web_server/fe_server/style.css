@@ -61,6 +61,7 @@ button:hover {
     background: #eee;
     border-radius: 5px;
     min-height: 125px;
+    max-height: 125px;
     font-size: 16px;
     text-align: left;
     overflow-y: auto;
