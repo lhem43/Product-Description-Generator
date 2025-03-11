@@ -2,6 +2,7 @@ __pycache__
 node_modules
 fine_tuned_bart
 fine_tuned_bart_v1
+fine_tuned_bart_v2
 fine_tuned_bert
 category_matching_modified.csv
 description_data_with_subcategory_and_prompt.csv

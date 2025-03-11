@@ -1,0 +1,1 @@
+AutoModelForCausalLM.from_pretrained(MODEL_NAME, torch_dtype=torch.float16)

@@ -50,10 +50,10 @@ button {
     transition: background-color ease 0.2s, color ease 0.2s;
 }
 
-    button:hover {
-        background-color: #007bff;
-        color: white;
-    }
+button:hover {
+    background-color: #007bff;
+    color: white;
+}
 
 #resultBox {
     margin-top: 20px;
@@ -63,4 +63,8 @@ button {
     min-height: 125px;
     font-size: 16px;
     text-align: left;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    scrollbar-width: thin;
 }
