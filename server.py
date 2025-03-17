@@ -115,6 +115,7 @@ def generate_response(user_input, main_category, sub_category, keywords):
     **Important**: The product description **must** include all the following keywords at least once: {keywords}.
 
     **Product Description**:
+    [START]
     """.strip()
 
     input_ids = phi2_tokenizer(prompt, return_tensors="pt").input_ids.to(phi2_model.device)
@@ -141,13 +142,17 @@ def generate_response(user_input, main_category, sub_category, keywords):
     for new_text in streamer:
         buffer += new_text
         cleaned_text = clean_output(buffer)
+        if "[/END]" in cleaned_text:
+            cleaned_text = cleaned_text.split("[/END]")[0]
+            yield cleaned_text[prev_length:].strip() + " "
+            break
+        if "[END]" in cleaned_text:
+            cleaned_text = cleaned_text.split("[END]")[0]
+            yield cleaned_text[prev_length:].strip() + " "
+            break
 
         new_part = cleaned_text[prev_length:].strip()
         prev_length = len(cleaned_text)
-
-        if any(keyword in new_part.lower() for keyword in ["python", "`", "def ", "class ", "import ", "()", "{}", "[]", '"""']):
-            print("Detected potential code generation. Stopping response.")
-            break
 
         if new_part:
             yield new_part + " "
